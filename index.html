@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Plate Pal MVP</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <header class="topbar">
+    <div>
+      <h1>Plate Pal</h1>
+      <p class="tagline">Good Food. Better Company.</p>
+    </div>
+    <button id="submitMealBtn" class="primary-btn">+ Share a Meal</button>
+  </header>
+
+  <main>
+    <section class="hero">
+      <div>
+        <span class="eyebrow">SOCIAL MEAL DISCOVERY</span>
+        <h2>See what people like you are actually eating.</h2>
+        <p>
+          Browse quick, realistic meals from friends and communities, save what looks good,
+          and share your own.
+        </p>
+      </div>
+      <div class="test-note">
+        <strong>MVP test:</strong>
+        <span>Will users open, save, join, or share meals?</span>
+      </div>
+    </section>
+
+    <section class="filters">
+      <button class="filter active" data-filter="all">For You</button>
+      <button class="filter" data-filter="college">College Meals</button>
+      <button class="filter" data-filter="protein">High Protein</button>
+      <button class="filter" data-filter="quick">Quick Dinners</button>
+    </section>
+
+    <section id="feed" class="feed"></section>
+
+    <section class="communities-section">
+      <div class="section-heading">
+        <div>
+          <span class="eyebrow">COMMUNITIES</span>
+          <h3>Find your people.</h3>
+        </div>
+      </div>
+
+      <div class="community-grid">
+        <article class="community-card">
+          <h4>College Meals</h4>
+          <p>Budget-friendly recipes that are easy to make between classes.</p>
+          <button class="secondary-btn join-btn" data-community="College Meals">Join Community</button>
+        </article>
+
+        <article class="community-card">
+          <h4>High Protein</h4>
+          <p>Simple meals for people who want balanced, protein-focused options.</p>
+          <button class="secondary-btn join-btn" data-community="High Protein">Join Community</button>
+        </article>
+
+        <article class="community-card">
+          <h4>Quick Dinners</h4>
+          <p>Meals you can actually make in 30 minutes or less.</p>
+          <button class="secondary-btn join-btn" data-community="Quick Dinners">Join Community</button>
+        </article>
+      </div>
+    </section>
+
+    <section class="feedback-section">
+      <div>
+        <span class="eyebrow">HELP US TEST PLATE PAL</span>
+        <h3>Would you use this?</h3>
+        <p>Your response helps us decide whether to keep building the concept.</p>
+      </div>
+      <form id="feedbackForm">
+        <label>
+          What would you most likely use Plate Pal for?
+          <select id="useCase" required>
+            <option value="">Choose one</option>
+            <option>Finding meal inspiration</option>
+            <option>Saving recipes</option>
+            <option>Seeing what friends are making</option>
+            <option>Sharing my own meals</option>
+            <option>Joining food communities</option>
+          </select>
+        </label>
+
+        <label>
+          How likely would you be to use Plate Pal weekly?
+          <select id="weeklyUse" required>
+            <option value="">Choose one</option>
+            <option>Very likely</option>
+            <option>Somewhat likely</option>
+            <option>Not sure</option>
+            <option>Unlikely</option>
+          </select>
+        </label>
+
+        <button class="primary-btn" type="submit">Submit Feedback</button>
+      </form>
+      <p id="feedbackThanks" class="success hidden">Thanks — your response was recorded on this device.</p>
+    </section>
+  </main>
+
+  <div id="recipeModal" class="modal hidden" aria-hidden="true">
+    <div class="modal-card">
+      <button class="close-btn" id="closeRecipe" aria-label="Close">×</button>
+      <img id="modalImage" alt="" />
+      <div class="modal-content">
+        <span id="modalTag" class="pill"></span>
+        <h3 id="modalTitle"></h3>
+        <p id="modalDescription"></p>
+
+        <h4>Ingredients</h4>
+        <ul id="modalIngredients"></ul>
+
+        <h4>Instructions</h4>
+        <ol id="modalInstructions"></ol>
+
+        <div class="modal-actions">
+          <button id="saveRecipeBtn" class="primary-btn">Save Meal</button>
+          <button id="groceryBtn" class="secondary-btn">Add to Grocery List</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="shareModal" class="modal hidden" aria-hidden="true">
+    <div class="modal-card small">
+      <button class="close-btn" id="closeShare" aria-label="Close">×</button>
+      <div class="modal-content">
+        <span class="eyebrow">SHARE YOUR MEAL</span>
+        <h3>What did you make?</h3>
+        <form id="shareMealForm">
+          <label>
+            Meal name
+            <input id="mealName" required placeholder="Ex: Honey Garlic Chicken Bowl" />
+          </label>
+          <label>
+            Brief description
+            <textarea id="mealDescription" required placeholder="Quick, easy, high-protein dinner..."></textarea>
+          </label>
+          <label>
+            Main ingredients
+            <input id="mealIngredients" required placeholder="Chicken, rice, broccoli..." />
+          </label>
+          <button class="primary-btn" type="submit">Post Meal</button>
+        </form>
+        <p id="shareThanks" class="success hidden">Posted! This counts as a core MVP action.</p>
+      </div>
+    </div>
+  </div>
+
+  <footer>
+    <p><strong>Plate Pal MVP</strong> · Built to test social meal discovery behavior.</p>
+    <button id="exportBtn" class="text-btn">Export Test Data</button>
+  </footer>
+
+  <script src="script.js"></script>
+</body>
+</html>
