@@ -15,7 +15,7 @@
     <button id="submitMealBtn" class="primary-btn">+ Share a Meal</button>
   </header>
 
-  <main>
+  <main id="main">
     <section class="hero">
       <div>
         <span class="eyebrow">SOCIAL MEAL DISCOVERY</span>
@@ -26,17 +26,27 @@
         </p>
       </div>
       <div class="test-note">
-        <strong>MVP test:</strong>
-        <span>Will users open, save, join, or share meals?</span>
+        <strong>A little inspiration for your next plate.</strong>
+        <span>Find a favorite. Make it yours. Come back for seconds.</span>
       </div>
     </section>
 
-    <section class="filters">
-      <button class="filter active" data-filter="all">For You</button>
+    <section class="group-panel" aria-labelledby="groupHeading">
+      <div><span class="eyebrow">TRY IT TOGETHER</span><h2 id="groupHeading">Your group’s table</h2><p id="groupStatus" class="results" role="status">Personal mode: posts stay in this browser.</p></div>
+      <div class="group-actions"><button id="refreshGroup" class="secondary-btn hidden">Refresh group feed</button><button id="copyGroupLink" class="secondary-btn hidden">Copy group link</button></div>
+      <label id="groupLinkLabel" class="hidden">Group link<input id="groupLink" type="text" readonly /></label>
+      <details id="groupHelp"><summary>How to test with your group</summary><p>For a shared feed, start the included group server on one computer and open its group link on each device connected to the same Wi-Fi. See GROUP_TESTING.md for the steps.</p><p>You can also try posting here on your own: add your name, a food photo, and optional nutrition info. Choose “Our posts” to see your creations.</p></details>
+    </section>
+    <div class="feed-heading"><h2>Your next good meal</h2><label class="search-label">Search meals<input id="searchMeals" type="search" placeholder="Try chicken, pasta, or avocado" /></label></div>
+    <section class="filters" aria-label="Filter meals">
+      <button class="filter active" data-filter="all">Discover</button>
       <button class="filter" data-filter="college">College Meals</button>
       <button class="filter" data-filter="protein">High Protein</button>
       <button class="filter" data-filter="quick">Quick Dinners</button>
+      <button class="filter" data-filter="group">Our posts</button>
+      <button class="filter" data-filter="saved">Saved meals <span id="savedCount">0</span></button>
     </section>
+    <p id="resultCount" class="results" aria-live="polite"></p>
 
     <section id="feed" class="feed"></section>
 
@@ -71,9 +81,9 @@
 
     <section class="feedback-section">
       <div>
-        <span class="eyebrow">HELP US TEST PLATE PAL</span>
+        <span class="eyebrow">MADE FOR YOUR EVERYDAY</span>
         <h3>Would you use this?</h3>
-        <p>Your response helps us decide whether to keep building the concept.</p>
+        <p>Tell us what would make your next meal easier.</p>
       </div>
       <form id="feedbackForm">
         <label>
@@ -105,7 +115,7 @@
     </section>
   </main>
 
-  <div id="recipeModal" class="modal hidden" aria-hidden="true">
+  <div id="recipeModal" class="modal hidden" role="dialog" aria-modal="true" aria-hidden="true" aria-label="Recipe">
     <div class="modal-card">
       <button class="close-btn" id="closeRecipe" aria-label="Close">×</button>
       <img id="modalImage" alt="" />
@@ -113,6 +123,7 @@
         <span id="modalTag" class="pill"></span>
         <h3 id="modalTitle"></h3>
         <p id="modalDescription"></p>
+        <div id="modalMacros"></div>
 
         <h4>Ingredients</h4>
         <ul id="modalIngredients"></ul>
@@ -128,37 +139,63 @@
     </div>
   </div>
 
-  <div id="shareModal" class="modal hidden" aria-hidden="true">
+  <div id="shareModal" class="modal hidden" role="dialog" aria-modal="true" aria-hidden="true" aria-label="Share a meal">
     <div class="modal-card small">
       <button class="close-btn" id="closeShare" aria-label="Close">×</button>
       <div class="modal-content">
         <span class="eyebrow">SHARE YOUR MEAL</span>
         <h3>What did you make?</h3>
         <form id="shareMealForm">
+          <label>Your name<input id="mealAuthor" maxlength="40" required autocomplete="nickname" placeholder="What should we call you?" /></label>
+          <div class="photo-upload">
+            <label>Meal photo (optional)<input id="mealPhoto" type="file" accept="image/jpeg,image/png,image/webp" aria-describedby="photoHelp photoStatus" /></label>
+            <p id="photoHelp" class="results">Choose a JPG, PNG, or WebP up to 15 MB. Photos are resized for your post.</p>
+            <img id="photoPreview" class="photo-preview hidden" alt="Your selected meal photo" />
+            <button id="removePhoto" class="text-btn hidden" type="button">Remove photo</button>
+            <p id="photoStatus" class="results" role="status"></p>
+          </div>
           <label>
             Meal name
-            <input id="mealName" required placeholder="Ex: Honey Garlic Chicken Bowl" />
+            <input id="mealName" maxlength="100" required placeholder="Ex: Honey Garlic Chicken Bowl" />
           </label>
           <label>
             Brief description
-            <textarea id="mealDescription" required placeholder="Quick, easy, high-protein dinner..."></textarea>
+            <textarea id="mealDescription" maxlength="600" required placeholder="Quick, easy, high-protein dinner..."></textarea>
           </label>
           <label>
-            Main ingredients
-            <input id="mealIngredients" required placeholder="Chicken, rice, broccoli..." />
+            Main ingredients (optional)
+            <input id="mealIngredients" maxlength="1500" placeholder="Chicken, rice, broccoli..." />
           </label>
-          <button class="primary-btn" type="submit">Post Meal</button>
+          <label>Steps (optional, one per line)<textarea id="mealSteps" maxlength="4000" placeholder="Cook the rice.&#10;Prepare your toppings.&#10;Build your bowl."></textarea></label>
+          <label>Community<select id="mealCommunity"><option value="college">College Meals</option><option value="protein">High Protein</option><option value="quick">Quick Dinners</option></select></label>
+          <fieldset class="macro-fields">
+            <legend>Nutrition per serving (optional)</legend>
+            <p class="results">Enter your own estimates or values from a label. Leave anything you don’t know blank.</p>
+            <label>Serving size<input id="mealServing" maxlength="80" placeholder="e.g. 1 bowl or 250 g" /></label>
+            <div class="macro-inputs">
+              <label>Calories (kcal)<input id="mealCalories" type="number" min="0" max="10000" step="1" inputmode="numeric" placeholder="—" /></label>
+              <label>Protein (g)<input id="mealProtein" type="number" min="0" max="1000" step="0.1" inputmode="decimal" placeholder="—" /></label>
+              <label>Carbs (g)<input id="mealCarbs" type="number" min="0" max="1000" step="0.1" inputmode="decimal" placeholder="—" /></label>
+              <label>Fat (g)<input id="mealFat" type="number" min="0" max="1000" step="0.1" inputmode="decimal" placeholder="—" /></label>
+            </div>
+            <p class="results">Reported by the person posting; not calculated from the photo.</p>
+          </fieldset>
+          <p id="shareModeNote" class="results">Your post is saved on this browser. Use group testing mode to share with your group.</p>
+          <p id="postError" class="form-error hidden" role="alert"></p>
+          <button id="postMealBtn" class="primary-btn" type="submit">Post meal</button>
         </form>
-        <p id="shareThanks" class="success hidden">Posted! This counts as a core MVP action.</p>
+        <p id="shareThanks" class="success hidden">Added to your feed!</p>
       </div>
     </div>
   </div>
 
+  <section class="grocery-section" aria-labelledby="groceryHeading"><div class="section-heading"><span class="eyebrow">READY TO COOK</span><h3 id="groceryHeading">Your grocery list</h3></div><p class="results">Add ingredients from any recipe, then check them off as you shop.</p><ul id="groceryList"></ul><button id="clearGroceries" class="secondary-btn">Clear checked items</button></section>
   <footer>
-    <p><strong>Plate Pal MVP</strong> · Built to test social meal discovery behavior.</p>
+    <p><strong>Plate Pal MVP</strong> · Good food starts with a little inspiration.</p>
     <button id="exportBtn" class="text-btn">Export Test Data</button>
   </footer>
 
+  <div id="toast" role="status" class="toast hidden"></div>
   <script src="script.js"></script>
 </body>
 </html>

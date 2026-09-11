@@ -353,3 +353,76 @@ footer {
     white-space: nowrap;
   }
 }
+
+/* Everyday meal discovery */
+:root { --cream: #faf7ef; --green: #365d46; --sage: #e8eddf; --line: #e3e5da; }
+body { line-height: 1.5; }
+.topbar h1 { letter-spacing: -1.5px; }
+.hero { padding: 64px 0 42px; }
+.hero h2 { font-family: Georgia, serif; font-weight: 500; line-height: 1.06; letter-spacing: -2px; }
+.test-note { background: #f0dfb9; padding: 30px; border-radius: 28px 28px 6px 28px; }
+.test-note strong { font-family: Georgia, serif; font-size: 1.65rem; font-weight: 500; margin-bottom: 14px; }
+.feed-heading { display: flex; justify-content: space-between; align-items: center; gap: 24px; margin-top: 16px; }
+.feed-heading h2 { font-size: 1.5rem; }
+.search-label { font-size: .8rem; width: min(380px, 100%); color: var(--muted); }
+.results { color: #59645b; font-size: .9rem; }
+#savedCount { margin-left: 5px; }
+.meal-card { display: flex; flex-direction: column; transition: box-shadow .2s; }
+.meal-card:hover { box-shadow: 0 14px 35px #17312615; }
+.meal-content { display: flex; flex-direction: column; flex: 1; padding: 22px; }
+.meal-meta { gap: 10px; font-size: .8rem; margin-bottom: 14px; }
+.meal-content .pill { align-self: flex-start; }
+.meal-content p { flex: 1; }
+.meal-placeholder { height: 230px; display: grid; place-items: center; background: #e8eddf; color: #365d46; font: 2rem Georgia, serif; }
+button:hover { filter: brightness(.95); }
+button:disabled { opacity: .55; cursor: default; }
+:focus-visible { outline: 3px solid #b87523; outline-offset: 4px; }
+.empty-state { grid-column: 1 / -1; text-align: center; padding: 45px 24px; border: 1px dashed var(--line); border-radius: 24px; }
+.grocery-section { width: min(1180px,90vw); margin: 0 auto 60px; padding: 28px; background: #e8eddf; border-radius: 24px; }
+#groceryList { list-style: none; padding: 0; columns: 2; }
+.grocery-item { display: flex; align-items: center; gap: 12px; padding: 8px 0; font-weight: 400; break-inside: avoid; }
+.grocery-item input { width: 20px; height: 20px; accent-color: var(--green); }
+.grocery-item.checked { text-decoration: line-through; color: var(--muted); }
+.toast { position: fixed; bottom: 22px; left: 50%; transform: translateX(-50%); background: var(--dark); color: white; padding: 14px 24px; border-radius: 16px; max-width: 90vw; width: max-content; z-index: 60; box-shadow: 0 5px 30px #0002; }
+#feed { scroll-margin-top: 130px; }
+.modal-content li { padding-bottom: 8px; }
+@media (min-width: 601px) and (max-width: 850px) { .feed, .community-grid { grid-template-columns: repeat(2, 1fr); } }
+@media (max-width: 600px) {
+  .topbar { padding: 16px 5vw; align-items: center; }
+  .topbar h1 { font-size: 1.6rem; }
+  .tagline { font-size: .7rem; }
+  .topbar .primary-btn { padding: 10px 12px; font-size: .8rem; }
+  .hero { padding-top: 32px; gap: 16px; }
+  .hero h2 { letter-spacing: -1px; }
+  .feed-heading { align-items: stretch; flex-direction: column; gap: 0; }
+  .search-label { width: 100%; }
+  .filters { margin-top: 22px; gap: 8px; }
+  .filter { font-size: .85rem; }
+  .modal { padding: 10px; }
+  .modal-card { width: 100%; max-height: 92dvh; }
+  .modal-card > img { height: 210px; }
+  #groceryList { columns: 1; }
+  footer { align-items: flex-start; flex-direction: column; }
+}
+@media (prefers-reduced-motion: reduce) { * { scroll-behavior: auto !important; transition: none !important; } }
+
+/* Photo posts and group testing */
+.photo-upload, .macro-fields { padding: 18px; border: 1px solid var(--line); border-radius: 18px; min-width: 0; }
+.photo-preview { display: block; width: 100%; max-height: 250px; object-fit: contain; background: var(--cream); border-radius: 12px; margin-bottom: 10px; }
+.macro-fields legend { font-weight: 700; padding: 0 6px; }
+.macro-inputs { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; margin-top: 14px; }
+.macro-inputs label { font-size: .85rem; }
+.nutrition { border-top: 1px solid var(--line); padding: 12px 0; margin-top: 10px; }
+.nutrition .nutrition-caption { font-size: .8rem; margin: 0 0 8px; }
+.macro-summary { display: flex; flex-wrap: wrap; gap: 8px; }
+.macro-summary span { background: var(--cream); border-radius: 8px; padding: 6px 8px; font-size: .8rem; }
+.nutrition small { display: block; color: #59645b; font-size: .7rem; margin-top: 7px; }
+.form-error { color: #9c3024; background: #fff1e9; border-radius: 10px; padding: 12px; }
+.group-panel { border: 1px solid var(--line); background: white; padding: 24px; border-radius: 24px; margin-bottom: 28px; }
+.group-panel h2 { margin: 6px 0; font: 1.7rem Georgia, serif; }
+.group-actions { display: flex; flex-wrap: wrap; gap: 10px; }
+.group-panel summary { cursor: pointer; color: var(--green); font-weight: 700; margin-top: 12px; }
+.group-panel details p { max-width: 760px; color: #59645b; }
+
+#groupLinkLabel { margin-top: 16px; max-width: 680px; font-size: .85rem; }
+#groupLink { font-weight: 400; }
