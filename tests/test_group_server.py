@@ -69,5 +69,19 @@ class GroupTest(unittest.TestCase):
         for body in [[], {}, dict(self.meal, user=' '), dict(self.meal, tag=[]), dict(self.meal, instructions=[3])]:
             self.assertEqual(self.request(body=body)[0], 400)
 
+    def test_interest_private_validated_and_deduplicated(self):
+        value = dict(name='Tester', email='TEST@example.com', plan='premium', consent=True, source='http://localhost/', campaign='class')
+        self.assertEqual(self.request('/api/interest', value, key='wrong')[0], 401)
+        self.assertEqual(self.request('/api/interest', dict(value, consent=False))[0], 400)
+        self.assertEqual(self.request('/api/interest', dict(value, email='bad'))[0], 400)
+        self.assertEqual(self.request('/api/interest', value)[0], 201)
+        self.assertEqual(self.request('/api/interest', value)[0], 201)
+        self.assertEqual(self.request('/api/interest')[0], 404)
+        self.assertEqual(self.request('/.group-data/interest-export.json')[0], 404)
+        with sqlite3.connect(self.database) as conn:
+            rows = conn.execute('SELECT body FROM interests').fetchall()
+        self.assertEqual(len(rows), 1)
+        self.assertEqual(json.loads(rows[0][0])['email'], 'test@example.com')
+
 if __name__ == '__main__':
     unittest.main()

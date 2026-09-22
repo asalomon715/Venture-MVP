@@ -7,6 +7,8 @@ import hmac
 import json
 import math
 import os
+import re
+from datetime import datetime, timezone
 from pathlib import Path
 import secrets
 import socket
@@ -15,10 +17,13 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from urllib.parse import urlsplit
 
 ROOT = Path(__file__).resolve().parent
-STATIC = {'/': ('index.html', 'text/html; charset=utf-8'),
+STATIC = {'/featured-demo.webm': ('featured-demo.webm', 'video/webm'), '/config.js': ('config.js', 'text/javascript; charset=utf-8'), '/admin.html': ('admin.html', 'text/html; charset=utf-8'), '/admin.js': ('admin.js', 'text/javascript; charset=utf-8'), '/': ('index.html', 'text/html; charset=utf-8'),
           '/index.html': ('index.html', 'text/html; charset=utf-8'),
           '/script.js': ('script.js', 'text/javascript; charset=utf-8'),
           '/style.css': ('style.css', 'text/css; charset=utf-8')}
+for photo in ['hummus', 'chicken-rice', 'tuna-pasta', 'quesadilla', 'white-beans', 'chickpea-curry']:
+    STATIC['/images/' + photo + '.jpg'] = ('images/' + photo + '.jpg', 'image/jpeg')
+
 TAGS = {'college': 'College Meal', 'protein': 'High Protein', 'quick': 'Quick Dinner'}
 
 
@@ -86,7 +91,7 @@ def make_handler(database, group_key, group_origin=None):
             self.send_header('Cache-Control', 'no-store')
             self.send_header('X-Content-Type-Options', 'nosniff')
             self.send_header('Referrer-Policy', 'no-referrer')
-            self.send_header('Content-Security-Policy', "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https://images.unsplash.com; connect-src 'self'; object-src 'none'; base-uri 'none'; frame-ancestors 'none'")
+            self.send_header('Content-Security-Policy', "default-src 'self'; media-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https://images.unsplash.com; connect-src 'self'; object-src 'none'; base-uri 'none'; frame-ancestors 'none'")
             self.end_headers()
             self.wfile.write(data)
 
@@ -112,7 +117,41 @@ def make_handler(database, group_key, group_origin=None):
                 return self.respond(200, (ROOT / name).read_bytes(), mime)
             self.respond(404, {'error': 'Not found.'})
 
+        def save_interest(self):
+            if not self.authorized():
+                return
+            try:
+                if self.headers.get('Content-Type', '').split(';')[0] != 'application/json':
+                    return self.respond(415, {'error': 'Expected JSON.'})
+                size = int(self.headers.get('Content-Length', '0'))
+                if not 0 < size <= 4096:
+                    return self.respond(413, {'error': 'Submission too large.'})
+                self.connection.settimeout(15)
+                value = json.loads(self.rfile.read(size))
+                if not isinstance(value, dict):
+                    raise ValueError('Invalid submission.')
+                for name, limit in [('name', 80), ('email', 254), ('source', 500), ('campaign', 100)]:
+                    if not isinstance(value.get(name), str) or len(value[name]) > limit:
+                        raise ValueError('Invalid field.')
+                    value[name] = value[name].strip()
+                if not value['name'] or not re.fullmatch(r'[^\s@]+@[^\s@]+\.[^\s@]+', value['email']):
+                    raise ValueError('Enter a name and valid email.')
+                if value.get('plan') not in ('free', 'premium') or value.get('consent') is not True:
+                    raise ValueError('Select an interest and consent to contact.')
+                value['email'] = value['email'].lower()
+                value['recordedAt'] = datetime.now(timezone.utc).isoformat()
+                with sqlite3.connect(database, timeout=15) as connection:
+                    connection.execute('CREATE TABLE IF NOT EXISTS interests (email TEXT PRIMARY KEY, body TEXT NOT NULL)')
+                    connection.execute('INSERT OR REPLACE INTO interests VALUES (?, ?)', (value['email'], json.dumps(value)))
+                return self.respond(201, {'saved': True})
+            except (ValueError, UnicodeError):
+                return self.respond(400, {'error': 'Check your name, email and consent.'})
+            except (sqlite3.Error, OSError):
+                return self.respond(503, {'error': 'Could not save. Please try again.'})
+
         def do_POST(self):
+            if urlsplit(self.path).path == '/api/interest':
+                return self.save_interest()
             if urlsplit(self.path).path != '/api/meals':
                 return self.respond(404, {'error': 'Not found.'})
             if not self.authorized():

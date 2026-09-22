@@ -22,8 +22,9 @@ CHROME = '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome'
 
 with tempfile.TemporaryDirectory(prefix='plate-pal-browser-') as temp:
     temp = Path(temp)
-    for name in ['index.html', 'script.js', 'style.css']:
+    for name in ['index.html', 'script.js', 'style.css', 'config.js', 'featured-demo.webm']:
         shutil.copy(ROOT / name, temp / name)
+    shutil.copytree(ROOT / 'images', temp / 'images')
     shutil.copy(ROOT / 'tests/browser-check.js', temp / 'check.js')
     page = temp / 'index.html'
     page.write_text(page.read_text().replace('</body>', '<script src="check.js"></script></body>'))

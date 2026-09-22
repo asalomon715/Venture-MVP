@@ -12,10 +12,17 @@
       <h1>Plate Pal</h1>
       <p class="tagline">Good Food. Better Company.</p>
     </div>
-    <button id="submitMealBtn" class="primary-btn">+ Share a Meal</button>
+    <div class="header-actions"><span class="pill">Plate Pal Plus</span><button id="myGroceriesBtn" class="secondary-btn">My groceries</button><button id="submitMealBtn" class="primary-btn">+ Share a Meal</button></div>
   </header>
 
   <main id="main">
+    <section class="featured-section" aria-labelledby="featuredHeading">
+      <div class="section-heading"><div><span class="eyebrow">AT THE PARTNER TABLE</span><h2 id="featuredHeading">A little inspiration. A delicious collaboration.</h2></div><span class="pill">Sponsored · Sample partnership</span></div>
+      <div class="featured-grid">
+        <div class="featured-player"><video id="featuredVideo" poster="images/hummus.jpg" controls playsinline preload="metadata" aria-label="Animated cooking demo: chicken and hummus bowl"><source src="featured-demo.webm" type="video/webm" />Your browser does not support this video.</video><p class="results">Animated recipe demo · Fictional brand shown for this sample placement.</p></div>
+        <div class="featured-copy"><span class="eyebrow">MEET HARVEST TABLE · SAMPLE FOOD BRAND</span><h3>Your 10-minute lunch, with a little extra joy.</h3><p>Build a chicken &amp; hummus bowl with Harvest Table’s lemon hummus. Watch the steps, save the recipe, and shop the ingredients.</p><p class="results">Restaurants and food brands can sponsor a cooking video and shoppable recipe here.</p><div class="featured-actions"><button id="featuredRecipe" class="primary-btn">Make this meal</button><button id="featuredSave" class="secondary-btn">Save featured meal</button><button id="featuredShop" class="secondary-btn">Shop ingredients</button></div><p id="featuredStatus" role="status"></p></div>
+      </div>
+    </section>
     <section class="hero">
       <div>
         <span class="eyebrow">SOCIAL MEAL DISCOVERY</span>
@@ -31,7 +38,7 @@
       </div>
     </section>
 
-    <section class="group-panel" aria-labelledby="groupHeading">
+    <section class="group-panel hidden" aria-labelledby="groupHeading">
       <div><span class="eyebrow">TRY IT TOGETHER</span><h2 id="groupHeading">Your group’s table</h2><p id="groupStatus" class="results" role="status">Personal mode: posts stay in this browser.</p></div>
       <div class="group-actions"><button id="refreshGroup" class="secondary-btn hidden">Refresh group feed</button><button id="copyGroupLink" class="secondary-btn hidden">Copy group link</button></div>
       <label id="groupLinkLabel" class="hidden">Group link<input id="groupLink" type="text" readonly /></label>
@@ -41,11 +48,13 @@
     <section class="filters" aria-label="Filter meals">
       <button class="filter active" data-filter="all">Discover</button>
       <button class="filter" data-filter="college">College Meals</button>
+      <button class="filter" data-filter="budget">Budget Friendly</button>
       <button class="filter" data-filter="protein">High Protein</button>
       <button class="filter" data-filter="quick">Quick Dinners</button>
       <button class="filter" data-filter="group">Our posts</button>
       <button class="filter" data-filter="saved">Saved meals <span id="savedCount">0</span></button>
     </section>
+    <p class="results">High Protein: protein-centered meals · Quick Dinners: about 30 minutes or less · Budget Friendly: pantry staples and affordable ingredients. Meals may fit more than one category.</p>
     <p id="resultCount" class="results" aria-live="polite"></p>
 
     <section id="feed" class="feed"></section>
@@ -79,39 +88,17 @@
       </div>
     </section>
 
-    <section class="feedback-section">
-      <div>
-        <span class="eyebrow">MADE FOR YOUR EVERYDAY</span>
-        <h3>Would you use this?</h3>
-        <p>Tell us what would make your next meal easier.</p>
-      </div>
-      <form id="feedbackForm">
-        <label>
-          What would you most likely use Plate Pal for?
-          <select id="useCase" required>
-            <option value="">Choose one</option>
-            <option>Finding meal inspiration</option>
-            <option>Saving recipes</option>
-            <option>Seeing what friends are making</option>
-            <option>Sharing my own meals</option>
-            <option>Joining food communities</option>
-          </select>
-        </label>
-
-        <label>
-          How likely would you be to use Plate Pal weekly?
-          <select id="weeklyUse" required>
-            <option value="">Choose one</option>
-            <option>Very likely</option>
-            <option>Somewhat likely</option>
-            <option>Not sure</option>
-            <option>Unlikely</option>
-          </select>
-        </label>
-
-        <button class="primary-btn" type="submit">Submit Feedback</button>
+    <section class="feedback-section interest-section">
+      <div><span class="eyebrow">SAVE YOUR SEAT</span><h3>Want more Plate Pal?</h3><p>Join the interest list for launch updates.</p></div>
+      <form id="interestForm">
+        <label>Name<input id="interestName" maxlength="80" autocomplete="given-name" required /></label>
+        <label>Email<input id="interestEmail" type="email" maxlength="254" autocomplete="email" required /></label>
+        <input id="interestPlan" type="hidden" value="free" />
+        <label class="consent"><input id="interestConsent" type="checkbox" required /> I agree to be contacted about Plate Pal. No payment or subscription starts today.</label>
+        <p id="interestNote" class="results"></p>
+        <button id="interestSubmit" class="primary-btn" type="submit">Join interest list</button>
+        <p id="interestStatus" role="status"></p>
       </form>
-      <p id="feedbackThanks" class="success hidden">Thanks — your response was recorded on this device.</p>
     </section>
   </main>
 
@@ -123,7 +110,7 @@
         <span id="modalTag" class="pill"></span>
         <h3 id="modalTitle"></h3>
         <p id="modalDescription"></p>
-        <div id="modalMacros"></div>
+        <div id="modalMacros"></div><p id="modalSource" class="results"></p>
 
         <h4>Ingredients</h4>
         <ul id="modalIngredients"></ul>
@@ -133,7 +120,7 @@
 
         <div class="modal-actions">
           <button id="saveRecipeBtn" class="primary-btn">Save Meal</button>
-          <button id="groceryBtn" class="secondary-btn">Add to Grocery List</button>
+          <button id="groceryBtn" class="secondary-btn">Scan ingredients &amp; add to list</button>
         </div>
       </div>
     </div>
@@ -189,13 +176,22 @@
     </div>
   </div>
 
-  <section class="grocery-section" aria-labelledby="groceryHeading"><div class="section-heading"><span class="eyebrow">READY TO COOK</span><h3 id="groceryHeading">Your grocery list</h3></div><p class="results">Add ingredients from any recipe, then check them off as you shop.</p><ul id="groceryList"></ul><button id="clearGroceries" class="secondary-btn">Clear checked items</button></section>
+  <section id="groceries" tabindex="-1" class="grocery-section" aria-labelledby="groceryHeading"><div class="section-heading"><span class="eyebrow">READY TO COOK</span><h3 id="groceryHeading">Your grocery list</h3></div><p class="results">Scan a recipe’s listed ingredients in one click. Check off anything you already have or pick up, then choose Clear checked items. This reads recipe ingredients, not photos.</p><ul id="groceryList"></ul><button id="clearGroceries" class="secondary-btn">Clear checked items</button><div class="upgrade-card"><div><span class="eyebrow">INCLUDED WITH PLATE PAL PLUS</span><h3>Your next meal, delivered.</h3><p>Choose a store and turn your saved ingredients into a shopping basket.</p></div><button id="shopGroceriesBtn" class="primary-btn">Shop with Instacart →</button></div></section>
+  <div id="shopModal" class="modal hidden" role="dialog" aria-modal="true" aria-hidden="true" aria-labelledby="shopTitle">
+    <div class="modal-card"><button id="closeShop" class="close-btn" aria-label="Close grocery shopping">×</button><div class="modal-content">
+      <span class="eyebrow">PLATE PAL PLUS · INSTACART SHOPPING PREVIEW</span><h3 id="shopTitle">Your list. Your favorite store.</h3><p class="results">Premium demo — store selection and baskets are simulated. Nothing is sent or ordered.</p>
+      <h4>1. Choose a store</h4><div id="storeChoices" class="store-grid" role="group" aria-label="Choose a store"></div><p class="results">Example stores; actual availability depends on your address and the shopping provider.</p>
+      <h4>2. Review your ingredients</h4><p id="basketSummary" role="status"></p><ul id="basketItems" class="basket-items"></ul><p class="results">Checked-off items stay out of your basket. Product matching, quantities, prices and substitutions would be reviewed at the store.</p>
+      <button id="previewBasket" class="primary-btn">Preview basket</button><div id="basketConfirmation" class="basket-confirmation hidden" role="status"></div>
+    </div></div>
+  </div>
   <footer>
     <p><strong>Plate Pal MVP</strong> · Good food starts with a little inspiration.</p>
-    <button id="exportBtn" class="text-btn">Export Test Data</button>
+    
   </footer>
 
   <div id="toast" role="status" class="toast hidden"></div>
+  <script src="config.js"></script>
   <script src="script.js"></script>
 </body>
 </html>
