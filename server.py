@@ -78,6 +78,8 @@ def validate_meal(value):
 
 
 def make_handler(database, group_key, group_origin=None):
+    with sqlite3.connect(database) as connection:
+        connection.execute('CREATE TABLE IF NOT EXISTS compliments (meal_id TEXT NOT NULL, visitor TEXT NOT NULL, PRIMARY KEY (meal_id, visitor))')
     class Handler(BaseHTTPRequestHandler):
         def log_message(self, *_):
             pass
@@ -106,6 +108,13 @@ def make_handler(database, group_key, group_origin=None):
             path = urlsplit(self.path).path
             if path == '/api/status':
                 return self.respond(200, {'groupServer': True, 'groupOrigin': group_origin})
+            if path == '/api/compliments':
+                if not self.authorized():
+                    return
+                visitor = self.headers.get('X-Visitor-Id', '')
+                with sqlite3.connect(database) as connection:
+                    rows = connection.execute('SELECT meal_id, COUNT(*), MAX(visitor = ?) FROM compliments GROUP BY meal_id', (visitor,)).fetchall()
+                return self.respond(200, {'compliments': {row[0]: {'count': row[1], 'active': bool(row[2])} for row in rows}})
             if path == '/api/meals':
                 if not self.authorized():
                     return
@@ -149,7 +158,41 @@ def make_handler(database, group_key, group_origin=None):
             except (sqlite3.Error, OSError):
                 return self.respond(503, {'error': 'Could not save. Please try again.'})
 
+        def save_compliment(self):
+            if not self.authorized():
+                return
+            try:
+                visitor = self.headers.get('X-Visitor-Id', '')
+                if not re.fullmatch(r'[a-zA-Z0-9-]{16,100}', visitor):
+                    raise ValueError('Invalid visitor.')
+                if self.headers.get('Content-Type', '').split(';')[0] != 'application/json':
+                    return self.respond(415, {'error': 'Expected JSON.'})
+                size = int(self.headers.get('Content-Length', '0'))
+                if not 0 < size <= 4096:
+                    return self.respond(413, {'error': 'Submission too large.'})
+                self.connection.settimeout(15)
+                value = json.loads(self.rfile.read(size))
+                if not isinstance(value, dict) or not isinstance(value.get('id'), str) or len(value['id']) > 100 or type(value.get('active')) is not bool:
+                    raise ValueError('Invalid compliment.')
+                meal_id = value['id']
+                with sqlite3.connect(database, timeout=15) as connection:
+                    connection.execute('BEGIN IMMEDIATE')
+                    if meal_id not in [str(i) for i in range(1, 10)] and not connection.execute('SELECT 1 FROM meals WHERE id = ?', (meal_id,)).fetchone():
+                        return self.respond(404, {'error': 'Post not found.'})
+                    if value['active']:
+                        connection.execute('INSERT OR IGNORE INTO compliments VALUES (?, ?)', (meal_id, visitor))
+                    else:
+                        connection.execute('DELETE FROM compliments WHERE meal_id = ? AND visitor = ?', (meal_id, visitor))
+                    count = connection.execute('SELECT COUNT(*) FROM compliments WHERE meal_id = ?', (meal_id,)).fetchone()[0]
+                return self.respond(200, {'count': count, 'active': value['active']})
+            except (ValueError, UnicodeError):
+                return self.respond(400, {'error': 'Invalid compliment.'})
+            except (sqlite3.Error, OSError):
+                return self.respond(503, {'error': 'Could not save your compliment. Try again.'})
+
         def do_POST(self):
+            if urlsplit(self.path).path == '/api/compliments':
+                return self.save_compliment()
             if urlsplit(self.path).path == '/api/interest':
                 return self.save_interest()
             if urlsplit(self.path).path != '/api/meals':

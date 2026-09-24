@@ -459,3 +459,16 @@ button:disabled { opacity: .55; cursor: default; }
 .basket-confirmation { margin-top:18px; padding:18px; background:var(--sage); border-radius:12px; line-height:1.6; }
 button:focus-visible, video:focus-visible { outline:3px solid #ba792d; outline-offset:4px; }
 @media(max-width:700px) { .featured-grid { grid-template-columns:1fr; } .featured-section { padding:18px; } .topbar { gap:12px; flex-wrap:wrap; } .header-actions { gap:6px; } .header-actions button { padding:9px 12px; } .store-choice { padding:14px; } }
+
+.author-link { color: inherit; font: inherit; font-weight: 700; background: none; border: 0; padding: 0; cursor: pointer; text-decoration: underline; text-underline-offset: 3px; overflow-wrap: anywhere; }
+.profile-panel { padding: 24px; margin-bottom: 24px; background: #f4f6ed; border-radius: 20px; }
+.profile-panel h2 { overflow-wrap: anywhere; }
+.compliment-row { display: flex; align-items: center; gap: 4px; margin-top: 10px; }
+.compliment-btn { display: inline-flex; align-items: center; justify-content: center; width: 44px; height: 44px; padding: 10px; border: 0; border-radius: 50%; background: transparent; color: #7b8276; cursor: pointer; }
+.compliment-btn svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+.compliment-btn:hover { background: #fce8df; color: #aa493d; }
+.compliment-btn[aria-pressed="true"] { color: #bb4c48; }
+.compliment-btn[aria-pressed="true"] svg { fill: currentColor; }
+.compliment-btn:focus-visible { outline: 2px solid #833b24; outline-offset: 2px; }
+.compliment-btn:disabled { opacity: .55; cursor: wait; }
+.compliment-count { font-size: .85rem; color: #576351; }

@@ -265,6 +265,64 @@ meals.unshift(...shared);
 let events = read('platePalEvents', []);
 let filter = 'all';
 let currentMeal = null;
+const username = value => String(value || '').trim().replace(/^@+/, '').trim().toLowerCase();
+let profileUser = null;
+let profileReturn = null;
+let compliments = read('platePalCompliments', []);
+let groupCompliments = {};
+const complimentBusy = new Set();
+let visitorId;
+try { visitorId = localStorage.getItem('platePalVisitor'); } catch {}
+if (!/^[a-zA-Z0-9-]{16,100}$/.test(visitorId || '')) {
+  visitorId = `visitor-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+  try { localStorage.setItem('platePalVisitor', visitorId); } catch {}
+}
+function complimentState(id) {
+  return groupMode ? (groupCompliments[String(id)] || {count:0, active:false}) : {count:compliments.includes(String(id)) ? 1 : 0, active:compliments.includes(String(id))};
+}
+function complimentMarkup(id) {
+  const state = complimentState(id);
+  return `<div class="compliment-row"><button class="compliment-btn" data-compliment="${escapeHTML(id)}" aria-pressed="${state.active}" aria-label="${state.active ? 'Undo compliment' : 'Compliment the chef'}" ${complimentBusy.has(String(id)) ? 'disabled' : ''}><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1.1-1.1a5.5 5.5 0 0 0-7.8 7.8L12 21l8.8-8.6a5.5 5.5 0 0 0 0-7.8Z"/></svg></button><span class="compliment-count" aria-live="polite">${state.count} ${state.count === 1 ? 'compliment' : 'compliments'}</span></div>`;
+}
+async function toggleCompliment(id) {
+  id = String(id);
+  if (complimentBusy.has(id)) return;
+  const active = !complimentState(id).active;
+  complimentBusy.add(id);
+  updateCompliments();
+  try {
+    if (groupMode) {
+      groupCompliments[id] = await groupRequest('/api/compliments', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({id, active})});
+    } else {
+      compliments = active ? [...compliments, id] : compliments.filter(x => x !== id);
+      write('platePalCompliments', compliments);
+    }
+  } catch { notify('Couldn’t save your compliment. Please try again.'); }
+  finally { complimentBusy.delete(id); updateCompliments(); }
+}
+function updateCompliments() {
+  document.querySelectorAll('[data-compliment]').forEach(button => {
+    const state = complimentState(button.dataset.compliment);
+    button.nextElementSibling.textContent = `${state.count} ${state.count === 1 ? 'compliment' : 'compliments'}`;
+    button.setAttribute('aria-pressed', state.active);
+    button.setAttribute('aria-label', state.active ? 'Undo compliment' : 'Compliment the chef');
+    button.disabled = complimentBusy.has(button.dataset.compliment);
+  });
+}
+function openProfile(user) {
+  if (!profileUser) profileReturn = {filter, query:$('searchMeals').value};
+  profileUser = username(user);
+  $('searchMeals').value = '';
+  renderMeals();
+  $('profileTitle').focus();
+  $('profilePanel').scrollIntoView({behavior:'smooth', block:'start'});
+}
+$('backToFeed').onclick = () => {
+  profileUser = null;
+  if (profileReturn) { filter = profileReturn.filter; $('searchMeals').value = profileReturn.query; }
+  renderMeals();
+  $('searchMeals').focus();
+};
 let previousFocus = null;
 function logEvent(type, detail = '') {
   events.push({type, detail, timestamp: new Date().toISOString()});
@@ -273,16 +331,24 @@ function logEvent(type, detail = '') {
 logEvent('visit');
 function renderMeals() {
   const query = $('searchMeals').value.trim().toLowerCase();
-  const visible = meals.filter(m => (filter === 'all' || (filter === 'saved' ? saved.includes(m.id) : filter === 'group' ? typeof m.id === 'string' : (m.tags || [m.tag]).includes(filter))) && [m.title, m.description, ...m.ingredients].join(' ').toLowerCase().includes(query));
+  const visible = meals.filter(m => (profileUser ? username(m.user) === profileUser : (filter === 'all' || (filter === 'saved' ? saved.includes(m.id) : filter === 'group' ? typeof m.id === 'string' : (m.tags || [m.tag]).includes(filter)))) && [m.title, m.description, ...m.ingredients].join(' ').toLowerCase().includes(query));
+  $('profilePanel').classList.toggle('hidden', !profileUser);
+  if (profileUser) {
+    $('profileTitle').textContent = '@' + profileUser;
+    const count = meals.filter(m => username(m.user) === profileUser).length;
+    $('profileSummary').textContent = `${count} post${count === 1 ? '' : 's'} by this chef`;
+  }
   $('savedCount').textContent = saved.length;
   $('resultCount').textContent = `${visible.length} meal${visible.length === 1 ? '' : 's'}${filter === 'saved' ? ' in your collection' : ' to inspire you'}`;
   $('feed').innerHTML = visible.length ? visible.map(m => `
     <article class="meal-card">
       ${m.image ? `<img src="${escapeHTML(m.image)}" alt="${escapeHTML(m.imageAlt || m.title)}" loading="lazy" />` : '<div class="meal-placeholder" aria-hidden="true">A little meal inspiration</div>'}
-      <div class="meal-content"><div class="meal-meta"><span>@${escapeHTML(m.user)}${typeof m.id === 'number' ? ' · Sample' : ''}</span><span>${escapeHTML(m.location)}</span></div>
-      <span class="pill">${escapeHTML(m.tagLabel)}</span>${m.minutes ? `<span class="meal-time">About ${m.minutes} min</span>` : ''}<h3>${escapeHTML(m.title)}</h3><p>${escapeHTML(m.description)}</p>${macroMarkup(m)}
+      <div class="meal-content"><div class="meal-meta"><span><button class="author-link" data-profile="${escapeHTML(username(m.user))}">@${escapeHTML(username(m.user))}</button>${typeof m.id === 'number' ? ' · Sample' : ''}</span><span>${escapeHTML(m.location)}</span></div>
+      <span class="pill">${escapeHTML(m.tagLabel)}</span>${m.minutes ? `<span class="meal-time">About ${m.minutes} min</span>` : ''}${complimentMarkup(m.id)}<h3>${escapeHTML(m.title)}</h3><p>${escapeHTML(m.description)}</p>${macroMarkup(m)}
       <div class="card-actions"><button class="primary-btn" data-open="${escapeHTML(m.id)}">${m.instructions.length ? 'View recipe' : 'View post'}</button><button class="secondary-btn" data-save="${escapeHTML(m.id)}" aria-pressed="${saved.includes(m.id)}">${saved.includes(m.id) ? 'Saved ✓' : 'Save meal'}</button><button class="secondary-btn" data-scan="${escapeHTML(m.id)}" ${m.ingredients.length ? '' : 'disabled'}>Scan → grocery list</button></div></div>
     </article>`).join('') : `<div class="empty-state"><h3>${filter === 'saved' && !query ? 'Keep your favorites close.' : 'No meals found.'}</h3><p>${filter === 'saved' && !query ? 'Save a meal from Discover and find it here whenever you’re hungry.' : 'Try another ingredient or community.'}</p></div>`;
+  document.querySelectorAll('[data-profile]').forEach(b => b.onclick = () => openProfile(b.dataset.profile));
+  document.querySelectorAll('[data-compliment]').forEach(b => b.onclick = () => toggleCompliment(b.dataset.compliment));
   document.querySelectorAll('[data-open]').forEach(b => b.onclick = () => openRecipe(b.dataset.open));
   document.querySelectorAll('[data-scan]').forEach(b => b.onclick = () => addMealIngredients(meals.find(m => String(m.id) === b.dataset.scan)));
   document.querySelectorAll('[data-save]').forEach(b => b.onclick = () => toggleSave(b.dataset.save));
@@ -326,6 +392,8 @@ function openRecipe(id) {
   if (currentMeal.image) $('modalImage').src = currentMeal.image;
   $('modalImage').alt = currentMeal.imageAlt || currentMeal.title;
   $('modalTag').textContent = currentMeal.tagLabel;
+  $('modalAuthor').textContent = '@' + username(currentMeal.user);
+  $('modalAuthor').onclick = () => { closeModal($('recipeModal')); openProfile(currentMeal.user); };
   $('modalTitle').textContent = currentMeal.title;
   $('modalDescription').textContent = currentMeal.description;
   $('modalMacros').innerHTML = macroMarkup(currentMeal);
@@ -352,6 +420,7 @@ document.querySelectorAll('.modal').forEach(modal => {
   });
 });
 document.querySelectorAll('.filter').forEach(b => b.onclick = () => {
+  profileUser = null;
   filter = b.dataset.filter;
   document.querySelectorAll('.filter').forEach(x => { x.classList.toggle('active', x === b); x.setAttribute('aria-pressed', x === b); });
   renderMeals();
@@ -442,7 +511,7 @@ $('shareMealForm').onsubmit = async e => {
   e.preventDefault();
   if (photoBusy || posting || !$('shareMealForm').reportValidity()) return;
   $('postError').classList.add('hidden');
-  const title = $('mealName').value.trim(), description = $('mealDescription').value.trim(), user = $('mealAuthor').value.trim();
+  const title = $('mealName').value.trim(), description = $('mealDescription').value.trim(), user = username($('mealAuthor').value);
   const ingredients = $('mealIngredients').value.split(',').map(x => x.trim()).filter(Boolean);
   const instructions = $('mealSteps').value.split('\n').map(x => x.trim()).filter(Boolean);
   if (!title || !description || !user) { $('postError').textContent = 'Add your name, a meal name, and a short description.'; $('postError').classList.remove('hidden'); return; }
@@ -505,7 +574,7 @@ $('clearGroceries').onclick = () => { groceries = groceries.filter(x => !x.check
 let groupToken = new URLSearchParams(location.hash.slice(1)).get('group') || '';
 let groupMode = Boolean(groupToken) && ['http:', 'https:'].includes(location.protocol);
 async function groupRequest(path, options = {}) {
-  const response = await fetch(path, {...options, headers:{...options.headers, 'X-Group-Key':groupToken}, signal:AbortSignal.timeout(15000)});
+  const response = await fetch(path, {...options, headers:{...options.headers, 'X-Group-Key':groupToken, 'X-Visitor-Id':visitorId}, signal:AbortSignal.timeout(15000)});
   if (!response.ok) {
     const body = await response.json().catch(() => ({}));
     throw new Error(body.error || 'Couldn’t reach the group feed. Your draft is still here; please try again.');
@@ -513,7 +582,8 @@ async function groupRequest(path, options = {}) {
   return response.json();
 }
 async function refreshGroup() {
-  const data = await groupRequest('/api/meals');
+  const [data, reactions] = await Promise.all([groupRequest('/api/meals'), groupRequest('/api/compliments')]);
+  groupCompliments = reactions.compliments;
   // Group mode shows server posts plus sample meals, never other browsers’ local drafts.
   const samples = meals.filter(m => typeof m.id === 'number');
   meals.splice(0, meals.length, ...data.meals, ...samples);

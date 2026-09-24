@@ -9,10 +9,26 @@
       await refreshGroup();
       const post = meals.find(m => m.title === '<b>Photo test bowl</b>');
       assert('second browser sees shared photo and macros', post && post.image.startsWith('data:image/jpeg;base64,') && post.macros.protein === 0 && post.macros.carbs === null);
+      assert('second browser sees first compliment', complimentState(post.id).count === 1 && !complimentState(post.id).active);
+      await toggleCompliment(post.id);
+      assert('second browser adds its own compliment', complimentState(post.id).count === 2 && complimentState(post.id).active);
       openRecipe(post.id);
       assert('shared photo in detail view', !$('modalImage').hidden && $('modalImage').src === post.image);
       assert('nutrition visible in detail view', $('modalMacros').textContent.includes('0') && $('modalMacros').textContent.includes('Self-reported'));
     } else {
+      $('searchMeals').value = 'no matches';
+      openProfile(' @PlatePal ');
+      assert('profile ignores previous filters and matches normalized username', document.querySelectorAll('.meal-card').length === 6 && $('profileTitle').textContent === '@platepal');
+      $('backToFeed').click();
+      assert('back restores search', $('searchMeals').value === 'no matches');
+      $('searchMeals').value = ''; renderMeals();
+      document.querySelector('[data-profile="sophia.m"]').click();
+      assert('clickable author isolates posts', document.querySelectorAll('.meal-card').length === 1);
+      $('backToFeed').click();
+      await toggleCompliment(1);
+      assert('compliment is pressed and counted', document.querySelector('[data-compliment="1"]').getAttribute('aria-pressed') === 'true' && complimentState(1).count === 1);
+      await toggleCompliment(1);
+      assert('compliment can be undone', complimentState(1).count === 0);
       assert('sample feed loads', meals.filter(m => typeof m.id === 'number').length === 9);
       document.querySelector('[data-filter="budget"]').click();
       assert('budget category isolates affordable meals', document.querySelectorAll('.meal-card').length === 3);
@@ -86,6 +102,8 @@
       $('mealCalories').value='-1'; assert('negative macros blocked', !$('mealCalories').checkValidity()); $('mealCalories').value='450';
       await $('shareMealForm').onsubmit({preventDefault(){},target:$('shareMealForm')});
       const post=meals.find(m => m.title === '<b>Photo test bowl</b>');
+      await toggleCompliment(post.id);
+      if (mode === 'personal') assert('compliment saved locally', JSON.parse(localStorage.getItem('platePalCompliments')).includes(post.id));
       assert('photo-only post with no recipe succeeds', post && post.ingredients.length === 0 && post.instructions.length === 0);
       assert('zero and unknown macros preserved', post.macros.protein === 0 && post.macros.carbs === null);
       assert('post title is escaped', document.querySelector('.meal-card h3').textContent === '<b>Photo test bowl</b>' && !document.querySelector('.meal-card h3 b'));

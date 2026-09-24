@@ -65,3 +65,9 @@ The interface assumes a Plate Pal Plus member. **My groceries** jumps to the sav
 The top sponsored section uses fictional Harvest Table branding and an original 12-second animated cooking video (`featured-demo.webm`). Native controls support playback and seeking. View recipe, save meal and shop ingredients connect to the existing chicken-and-hummus recipe and saved groceries. Video plays, featured saves and basket actions appear in the existing local event log. This demonstrates paid restaurant/brand placement; it does not sell or charge for an advertising slot.
 
 Include `featured-demo.webm` with the static files when publishing. A real partner can replace the animation with a licensed cooking video and update the HTML source and sponsor copy. No price-interest CTA or coming-soon grocery message is displayed.
+
+## Profiles and compliments
+
+Click a post’s @username to see all posts with that username. Matching ignores capitalization, surrounding spaces, and leading @ signs. Back to feed restores the previous search and category. Usernames are self-entered, not verified accounts; matching names share a profile.
+
+Compliment the chef on any feed or profile card, and click again to undo. Personal mode stores your compliment in this browser. Group mode stores shared counts in SQLite, with one compliment per browser per post; Refresh group feed retrieves peers’ latest compliments. Browser identity persists locally, not across devices or cleared browser data. These changes do not add an internet-wide backend to the public demo.

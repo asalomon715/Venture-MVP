@@ -12,7 +12,7 @@
       <h1>Plate Pal</h1>
       <p class="tagline">Good Food. Better Company.</p>
     </div>
-    <div class="header-actions"><span class="pill">Plate Pal Plus</span><button id="myGroceriesBtn" class="secondary-btn">My groceries</button><button id="submitMealBtn" class="primary-btn">+ Share a Meal</button></div>
+    <div class="header-actions"><button id="myGroceriesBtn" class="secondary-btn">My groceries</button><button id="submitMealBtn" class="primary-btn">+ Share a Meal</button></div>
   </header>
 
   <main id="main">
@@ -54,9 +54,9 @@
       <button class="filter" data-filter="group">Our posts</button>
       <button class="filter" data-filter="saved">Saved meals <span id="savedCount">0</span></button>
     </section>
-    <p class="results">High Protein: protein-centered meals · Quick Dinners: about 30 minutes or less · Budget Friendly: pantry staples and affordable ingredients. Meals may fit more than one category.</p>
     <p id="resultCount" class="results" aria-live="polite"></p>
 
+    <section id="profilePanel" class="profile-panel hidden" aria-labelledby="profileTitle"><button id="backToFeed" class="secondary-btn">← Back to feed</button><h2 id="profileTitle" tabindex="-1"></h2><p id="profileSummary"></p><p class="results">All posts with this username, together in one place.</p></section>
     <section id="feed" class="feed"></section>
 
     <section class="communities-section">
@@ -108,7 +108,7 @@
       <img id="modalImage" alt="" />
       <div class="modal-content">
         <span id="modalTag" class="pill"></span>
-        <h3 id="modalTitle"></h3>
+        <button id="modalAuthor" class="author-link"></button><h3 id="modalTitle"></h3>
         <p id="modalDescription"></p>
         <div id="modalMacros"></div><p id="modalSource" class="results"></p>
 
@@ -133,7 +133,7 @@
         <span class="eyebrow">SHARE YOUR MEAL</span>
         <h3>What did you make?</h3>
         <form id="shareMealForm">
-          <label>Your name<input id="mealAuthor" maxlength="40" required autocomplete="nickname" placeholder="What should we call you?" /></label>
+          <p id="usernameHelp" class="results">Use the same username on each post to keep them on your profile. Capitalization and a leading @ don’t matter.</p><label>Your username<input id="mealAuthor" maxlength="40" required autocomplete="nickname" placeholder="@yourname" aria-describedby="usernameHelp" /></label>
           <div class="photo-upload">
             <label>Meal photo (optional)<input id="mealPhoto" type="file" accept="image/jpeg,image/png,image/webp" aria-describedby="photoHelp photoStatus" /></label>
             <p id="photoHelp" class="results">Choose a JPG, PNG, or WebP up to 15 MB. Photos are resized for your post.</p>

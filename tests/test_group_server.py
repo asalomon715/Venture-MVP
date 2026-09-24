@@ -28,9 +28,9 @@ class GroupTest(unittest.TestCase):
     def tearDown(self):
         self.server.shutdown(); self.server.server_close(); self.thread.join(); self.temp.cleanup()
 
-    def request(self, path='/api/meals', body=None, key='test-key'):
+    def request(self, path='/api/meals', body=None, key='test-key', visitor='visitor-test-123456'):
         req = Request(self.url + path, data=json.dumps(body).encode() if body is not None else None,
-                      headers={'X-Group-Key': key, 'Content-Type':'application/json'})
+                      headers={'X-Group-Key': key, 'X-Visitor-Id':visitor, 'Content-Type':'application/json'})
         try:
             with urlopen(req, timeout=3) as response:
                 return response.status, json.load(response)
@@ -54,6 +54,22 @@ class GroupTest(unittest.TestCase):
     def test_database_and_paths_are_not_served(self):
         for path in ['/.group-data/meals.sqlite3', '/server.py', '/../server.py', '/%2e%2e/server.py']:
             self.assertEqual(self.request(path)[0], 404)
+
+    def test_compliments_shared_idempotent_and_removable(self):
+        self.request(body=self.meal)
+        payload = {'id': self.meal['id'], 'active': True}
+        for _ in range(2):
+            self.assertEqual(self.request('/api/compliments', payload)[1], {'count': 1, 'active': True})
+        other = 'visitor-other-123456'
+        self.assertEqual(self.request('/api/compliments', payload, visitor=other)[1]['count'], 2)
+        self.assertEqual(self.request('/api/compliments')[1]['compliments'][payload['id']]['count'], 2)
+        payload['active'] = False
+        self.assertEqual(self.request('/api/compliments', payload)[1], {'count': 1, 'active': False})
+        self.assertEqual(self.request('/api/compliments', payload)[1]['count'], 1)
+        self.assertEqual(self.request('/api/compliments', payload, key='wrong')[0], 401)
+        self.assertEqual(self.request('/api/compliments', dict(payload, id='missing'))[0], 404)
+        self.assertEqual(self.request('/api/compliments', dict(payload, active='yes'))[0], 400)
+        self.assertEqual(self.request('/api/compliments', payload, visitor='')[0], 400)
 
     def test_macro_validation(self):
         for value in [-1, 1001, '3', True, float('nan'), float('inf')]:
